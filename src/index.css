@@ -8,35 +8,52 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Hotstar-inspired design system */
+    --background: 210 30% 8%;
+    --foreground: 0 0% 98%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 210 25% 12%;
+    --card-foreground: 0 0% 98%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 210 25% 12%;
+    --popover-foreground: 0 0% 98%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 213 94% 68%;
+    --primary-foreground: 210 30% 8%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 210 20% 18%;
+    --secondary-foreground: 0 0% 98%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 210 20% 18%;
+    --muted-foreground: 0 0% 65%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 213 94% 68%;
+    --accent-foreground: 210 30% 8%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 210 20% 18%;
+    --input: 210 20% 18%;
+    --ring: 213 94% 68%;
 
-    --radius: 0.5rem;
+    --radius: 0.375rem;
+
+    /* Custom Hotstar colors */
+    --hotstar-blue: 213 94% 68%;
+    --hotstar-dark: 210 30% 8%;
+    --hotstar-card: 210 25% 12%;
+    --hotstar-hover: 210 20% 18%;
+    --hotstar-gold: 45 100% 65%;
+    
+    /* TV Guide colors */
+    --channel-bg: 210 25% 15%;
+    --program-bg: 210 20% 20%;
+    --live-indicator: 0 100% 50%;
+    
+    /* Navigation focus */
+    --focus-ring: 213 94% 68%;
+    --focus-bg: 213 94% 68% / 0.1;
 
     --sidebar-background: 0 0% 98%;
 
@@ -100,6 +117,72 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground overflow-hidden;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+}
+
+@layer components {
+  /* Key navigation focus styles */
+  .focusable {
+    @apply transition-all duration-200 ease-in-out;
+    outline: none;
+  }
+  
+  .focusable:focus {
+    @apply ring-2 ring-primary scale-105 z-10;
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.3);
+  }
+  
+  /* TV Guide grid */
+  .tv-guide-grid {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    height: calc(100vh - 120px);
+  }
+  
+  .tv-guide-time-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1px;
+  }
+  
+  /* Channel banner */
+  .channel-banner {
+    @apply bg-card/90 backdrop-blur-md border-b border-border;
+    background: linear-gradient(135deg, 
+      hsl(var(--hotstar-blue) / 0.1), 
+      hsl(var(--hotstar-card) / 0.9)
+    );
+  }
+  
+  /* Live indicator pulse */
+  .live-pulse {
+    animation: pulse-live 2s infinite;
+  }
+  
+  @keyframes pulse-live {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+  
+  /* Content card hover effects */
+  .content-card {
+    @apply transition-all duration-300 ease-out;
+  }
+  
+  .content-card:hover {
+    @apply scale-105;
+    box-shadow: 0 10px 30px hsl(var(--background) / 0.8);
+  }
+  
+  /* Video player overlay */
+  .video-overlay {
+    background: linear-gradient(
+      180deg,
+      transparent 0%,
+      hsl(var(--background) / 0.3) 70%,
+      hsl(var(--background) / 0.8) 100%
+    );
   }
 }
