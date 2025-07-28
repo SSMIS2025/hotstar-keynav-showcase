@@ -185,4 +185,52 @@ All colors MUST be HSL.
       hsl(var(--background) / 0.8) 100%
     );
   }
+  
+  /* Background fade effect like Netflix/Hotstar */
+  .hero-background {
+    background: linear-gradient(
+      135deg,
+      hsl(var(--background)) 0%,
+      transparent 50%,
+      hsl(var(--background)) 100%
+    ),
+    linear-gradient(
+      to right,
+      hsl(var(--background)) 0%,
+      transparent 40%,
+      transparent 60%,
+      hsl(var(--background)) 100%
+    );
+  }
+  
+  /* Loading spinner */
+  .loading-spinner {
+    @apply w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin;
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.3);
+  }
+  
+  /* Grid navigation styles */
+  .grid-container {
+    transform: translate(var(--scroll-x, 0px), var(--scroll-y, 0px));
+    transition: transform 0.3s ease-out;
+  }
+  
+  /* Content focus effects */
+  .content-focus {
+    @apply ring-4 ring-primary scale-110 z-20;
+    box-shadow: 0 20px 40px hsl(var(--background) / 0.8),
+                0 0 30px hsl(var(--primary) / 0.4);
+    transition: all 0.3s ease-out;
+  }
+  
+  /* Favorite indicator */
+  .favorite-indicator {
+    @apply absolute top-2 right-2 w-8 h-8 bg-red-500 rounded-full flex items-center justify-center text-white text-sm;
+    animation: pulse-favorite 2s infinite;
+  }
+  
+  @keyframes pulse-favorite {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+  }
 }

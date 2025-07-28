@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { contentLibrary, channels, Content, Channel } from '../data/mockData';
 import { useKeyNavigation } from '../hooks/useKeyNavigation';
+import Navbar from './Navbar';
 
 interface SearchProps {
   onClose: () => void;
@@ -73,15 +74,9 @@ const Search: React.FC<SearchProps> = ({ onClose, onSelectContent }) => {
 
   return (
     <div className="fixed inset-0 bg-background z-50">
-      {/* Header */}
-      <div className="bg-card border-b border-border p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-primary">Search</h1>
-          <div className="text-sm text-muted-foreground">
-            Press ESC to close • Use arrow keys to navigate • Enter to select
-          </div>
-        </div>
-        
+      <Navbar title="Search" onBack={onClose} />
+      
+      <div className="p-6">
         {/* Search Input */}
         <div className="mb-4">
           <input
@@ -123,7 +118,7 @@ const Search: React.FC<SearchProps> = ({ onClose, onSelectContent }) => {
       </div>
 
       {/* Search Results */}
-      <div className="p-6 overflow-y-auto h-full">
+      <div className="px-6 pb-6 overflow-y-auto h-full">
         {!searchQuery.trim() ? (
           <div className="text-center text-muted-foreground py-12">
             <div className="text-6xl mb-4">🔍</div>

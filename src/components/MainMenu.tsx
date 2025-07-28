@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useKeyNavigation } from '../hooks/useKeyNavigation';
+import Navbar from './Navbar';
 
 interface MainMenuProps {
   onClose: () => void;
@@ -32,14 +33,11 @@ const MainMenu: React.FC<MainMenuProps> = ({ onClose, onNavigate }) => {
   });
 
   return (
-    <div className="fixed inset-0 bg-background/95 backdrop-blur-md z-50 flex items-center justify-center">
-      <div className="bg-card border border-border rounded-lg p-8 max-w-md w-full mx-4">
-        <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold text-primary mb-2">Main Menu</h1>
-          <p className="text-sm text-muted-foreground">
-            Use arrow keys to navigate • Enter to select • ESC to close
-          </p>
-        </div>
+    <div className="fixed inset-0 bg-background z-50">
+      <Navbar title="Main Menu" onBack={onClose} />
+      
+      <div className="flex items-center justify-center min-h-[calc(100vh-120px)]">
+        <div className="bg-card border border-border rounded-lg p-8 max-w-md w-full mx-4">
 
         <div className="space-y-2">
           {menuItems.map((item, index) => (
@@ -67,8 +65,9 @@ const MainMenu: React.FC<MainMenuProps> = ({ onClose, onNavigate }) => {
           ))}
         </div>
 
-        <div className="mt-6 text-center text-xs text-muted-foreground">
-          <p>Hotstar Clone • Key Navigation Interface</p>
+          <div className="mt-6 text-center text-xs text-muted-foreground">
+            <p>Hotstar Clone • Key Navigation Interface</p>
+          </div>
         </div>
       </div>
     </div>

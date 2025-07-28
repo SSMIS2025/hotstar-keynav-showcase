@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { games, Game } from '../data/mockData';
 import { useKeyNavigation } from '../hooks/useKeyNavigation';
+import Navbar from './Navbar';
 
 interface GamesProps {
   onClose: () => void;
@@ -41,15 +42,7 @@ const Games: React.FC<GamesProps> = ({ onClose, onSelectGame }) => {
 
   return (
     <div className="fixed inset-0 bg-background z-50">
-      {/* Header */}
-      <div className="bg-card border-b border-border p-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-primary">Games</h1>
-          <div className="text-sm text-muted-foreground">
-            Press ESC to close • Use arrow keys to navigate • Enter to play
-          </div>
-        </div>
-      </div>
+      <Navbar title="Games" onBack={onClose} />
 
       {/* Games Grid */}
       <div className="p-6 overflow-y-auto h-full">

@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { contentLibrary, channels } from '../data/mockData';
-import { useKeyNavigation } from '../hooks/useKeyNavigation';
+import { useGridNavigation } from '../hooks/useGridNavigation';
 
 interface HomeProps {
   onNavigate: (section: string) => void;
@@ -9,7 +9,9 @@ interface HomeProps {
 
 const Home: React.FC<HomeProps> = ({ onNavigate, onOpenMenu }) => {
   const [selectedSection, setSelectedSection] = useState(0);
-  const [selectedItem, setSelectedItem] = useState(0);
+  const [previewContent, setPreviewContent] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [backgroundImage, setBackgroundImage] = useState('');
 
   const sections = [
     { id: 'live-tv', title: 'Live TV', items: channels },
@@ -18,48 +20,102 @@ const Home: React.FC<HomeProps> = ({ onNavigate, onOpenMenu }) => {
   ];
 
   const currentSection = sections[selectedSection];
-  const maxItemsVisible = 6;
+  const itemsPerRow = Math.floor(window.innerWidth / 250); // Dynamic based on screen size
+  const totalItems = currentSection.items.length;
 
-  useKeyNavigation({
-    onUp: () => {
-      if (selectedSection > 0) {
-        setSelectedSection(selectedSection - 1);
-        setSelectedItem(0);
-      }
+  const { selectedIndex, scrollOffset, isSelected } = useGridNavigation({
+    itemsPerRow,
+    totalItems,
+    onSelect: (index) => {
+      const item = currentSection.items[index];
+      setIsLoading(true);
+      
+      // Simulate loading
+      setTimeout(() => {
+        setIsLoading(false);
+        if (currentSection.id === 'live-tv') {
+          onNavigate('live-tv');
+        } else {
+          setPreviewContent(item);
+          if ('thumbnail' in item) {
+            setBackgroundImage((item as any).thumbnail);
+          }
+        }
+      }, 800);
     },
-    onDown: () => {
-      if (selectedSection < sections.length - 1) {
-        setSelectedSection(selectedSection + 1);
-        setSelectedItem(0);
-      }
-    },
-    onLeft: () => {
-      if (selectedItem > 0) {
-        setSelectedItem(selectedItem - 1);
-      }
-    },
-    onRight: () => {
-      if (selectedItem < Math.min(currentSection.items.length - 1, maxItemsVisible - 1)) {
-        setSelectedItem(selectedItem + 1);
-      }
-    },
-    onSelect: () => {
-      if (currentSection.id === 'live-tv') {
-        onNavigate('live-tv');
-      } else {
-        // Handle content selection
-        onNavigate('video-player');
-      }
-    },
-    onMenu: onOpenMenu,
-    onGuide: () => onNavigate('tv-guide'),
-    onSearch: () => onNavigate('search')
+    onBack: onOpenMenu
   });
 
+  // Auto-preview content on focus
+  useEffect(() => {
+    const focusedItem = currentSection.items[selectedIndex % totalItems];
+    if (focusedItem) {
+      const hasThumb = 'thumbnail' in focusedItem;
+      if (hasThumb) {
+        setBackgroundImage((focusedItem as any).thumbnail);
+      }
+    }
+  }, [selectedIndex, currentSection, totalItems]);
+
+  const handleKeyDown = (event: KeyboardEvent) => {
+    switch (event.key) {
+      case 'PageUp':
+      case 'PageDown':
+        event.preventDefault();
+        const newSection = event.key === 'PageUp' 
+          ? Math.max(0, selectedSection - 1)
+          : Math.min(sections.length - 1, selectedSection + 1);
+        if (newSection !== selectedSection) {
+          setSelectedSection(newSection);
+        }
+        break;
+      case 'm':
+      case 'M':
+        event.preventDefault();
+        onOpenMenu();
+        break;
+      case 'g':
+      case 'G':
+        event.preventDefault();
+        onNavigate('tv-guide');
+        break;
+      case 's':
+      case 'S':
+        if (!event.ctrlKey) {
+          event.preventDefault();
+          onNavigate('search');
+        }
+        break;
+    }
+  };
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedSection]);
+
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground relative overflow-hidden">
+      {/* Background Image with Fade */}
+      {backgroundImage && (
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat hero-background"
+          style={{ backgroundImage: `url(${backgroundImage})` }}
+        />
+      )}
+      
+      {/* Loading Overlay */}
+      {isLoading && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="text-center">
+            <div className="loading-spinner mx-auto mb-4"></div>
+            <p className="text-primary font-semibold">Loading content...</p>
+          </div>
+        </div>
+      )}
+      
       {/* Header */}
-      <div className="bg-card/50 backdrop-blur-md border-b border-border p-6">
+      <div className="bg-card/50 backdrop-blur-md border-b border-border p-6 relative z-10">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
@@ -78,39 +134,35 @@ const Home: React.FC<HomeProps> = ({ onNavigate, onOpenMenu }) => {
       </div>
 
       {/* Main Content */}
-      <div className="p-6">
-        {sections.map((section, sectionIndex) => (
-          <div key={section.id} className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className={`text-xl font-bold transition-colors ${
-                selectedSection === sectionIndex ? 'text-primary' : 'text-foreground'
-              }`}>
-                {section.title}
-              </h2>
-              <button 
-                className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                onClick={() => onNavigate(section.id)}
-              >
-                View All →
-              </button>
+      <div className="p-6 relative z-10">
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-primary">
+              {currentSection.title}
+            </h2>
+            <div className="text-sm text-muted-foreground">
+              Section {selectedSection + 1} of {sections.length}
             </div>
+          </div>
 
-            <div className="flex gap-4 overflow-hidden">
-              {section.items.slice(0, maxItemsVisible).map((item, itemIndex) => {
-                const isSelected = selectedSection === sectionIndex && selectedItem === itemIndex;
-                const isChannel = 'lcn' in item;
+          <div 
+            className="grid gap-4 grid-container"
+            style={{
+              gridTemplateColumns: `repeat(${itemsPerRow}, 1fr)`,
+              transform: `translate(-${scrollOffset.x}px, -${scrollOffset.y}px)`
+            }}
+          >
+            {currentSection.items.map((item, itemIndex) => {
+              const isSelectedItem = isSelected(itemIndex);
+              const isChannel = 'lcn' in item;
                 
-                return (
-                  <div
-                    key={isChannel ? `channel-${item.id}` : `content-${item.id}`}
-                    className={`flex-shrink-0 w-48 cursor-pointer transition-all duration-300 content-card ${
-                      isSelected ? 'scale-105 ring-2 ring-primary' : ''
-                    }`}
-                    onClick={() => {
-                      setSelectedSection(sectionIndex);
-                      setSelectedItem(itemIndex);
-                    }}
-                  >
+              return (
+                <div
+                  key={isChannel ? `channel-${item.id}` : `content-${item.id}`}
+                  className={`cursor-pointer transition-all duration-300 content-card ${
+                    isSelectedItem ? 'content-focus' : ''
+                  }`}
+                >
                     {isChannel ? (
                       // Channel Card
                       <div className="bg-card rounded-lg border border-border overflow-hidden">
@@ -171,11 +223,10 @@ const Home: React.FC<HomeProps> = ({ onNavigate, onOpenMenu }) => {
                       </div>
                     )}
                   </div>
-                );
-              })}
-            </div>
+              );
+            })}
           </div>
-        ))}
+        </div>
       </div>
 
       {/* Navigation Hints */}

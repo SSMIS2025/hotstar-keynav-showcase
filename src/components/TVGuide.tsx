@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { channels, tvGuideData, TVGuideData, Program } from '../data/mockData';
 import { useKeyNavigation } from '../hooks/useKeyNavigation';
+import { useFavorites } from '../hooks/useFavorites';
+import Navbar from './Navbar';
 
 interface TVGuideProps {
   onClose: () => void;
@@ -11,7 +13,9 @@ const TVGuide: React.FC<TVGuideProps> = ({ onClose, onSelectProgram }) => {
   const [selectedDay, setSelectedDay] = useState(0); // -7 to +7 from today
   const [selectedChannel, setSelectedChannel] = useState(0);
   const [selectedProgram, setSelectedProgram] = useState(0);
+  const [viewMode, setViewMode] = useState<'vertical' | 'horizontal'>('vertical');
   const containerRef = useRef<HTMLDivElement>(null);
+  const { favorites, toggleFavorite, isFavorite } = useFavorites();
 
   const today = new Date();
   const currentDate = new Date(today);
@@ -58,10 +62,7 @@ const TVGuide: React.FC<TVGuideProps> = ({ onClose, onSelectProgram }) => {
     },
     onBack: onClose,
     onChannelUp: () => {
-      if (selectedDay < 7) {
-        setSelectedDay(selectedDay + 1);
-        setSelectedProgram(0);
-      }
+      setViewMode(viewMode === 'vertical' ? 'horizontal' : 'vertical');
     },
     onChannelDown: () => {
       if (selectedDay > -7) {
@@ -97,14 +98,33 @@ const TVGuide: React.FC<TVGuideProps> = ({ onClose, onSelectProgram }) => {
     return selectedDay === 0 && now >= start && now <= end;
   };
 
+  const handleFavoriteToggle = (program: Program) => {
+    toggleFavorite({
+      id: program.id,
+      type: 'program',
+      title: program.title
+    });
+  };
+
   return (
     <div className="fixed inset-0 bg-background z-50" ref={containerRef}>
-      {/* Header */}
-      <div className="bg-card border-b border-border p-4">
+      <Navbar 
+        title={`TV Guide - ${viewMode === 'vertical' ? 'Channel View' : 'Timeline View'}`} 
+        onBack={onClose} 
+      />
+      
+      <div className="p-4">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold text-primary">TV Guide</h1>
-          <div className="text-sm text-muted-foreground">
-            Press ESC to close • Use arrow keys to navigate • Enter to select
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setViewMode(viewMode === 'vertical' ? 'horizontal' : 'vertical')}
+              className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/80 transition-colors"
+            >
+              {viewMode === 'vertical' ? '📋 Switch to Timeline' : '📺 Switch to Channels'}
+            </button>
+            <div className="text-sm text-muted-foreground">
+              {favorites.length} favorites saved
+            </div>
           </div>
         </div>
         
@@ -129,8 +149,9 @@ const TVGuide: React.FC<TVGuideProps> = ({ onClose, onSelectProgram }) => {
         </div>
       </div>
 
-      {/* TV Guide Grid */}
-      <div className="tv-guide-grid">
+      {/* TV Guide Content */}
+      {viewMode === 'vertical' ? (
+        <div className="tv-guide-grid">
         {/* Channel List */}
         <div className="bg-card border-r border-border overflow-y-auto">
           <div className="sticky top-0 bg-card border-b border-border p-3">
@@ -185,7 +206,7 @@ const TVGuide: React.FC<TVGuideProps> = ({ onClose, onSelectProgram }) => {
                 {programs.map((program, index) => (
                   <div
                     key={program.id}
-                    className={`p-4 rounded-lg border cursor-pointer transition-all ${
+                    className={`p-4 rounded-lg border cursor-pointer transition-all relative ${
                       selectedProgram === index
                         ? 'border-primary bg-primary/10 scale-[1.02]'
                         : isCurrentTime(program)
@@ -197,11 +218,30 @@ const TVGuide: React.FC<TVGuideProps> = ({ onClose, onSelectProgram }) => {
                       onSelectProgram(program);
                     }}
                   >
+                    {isFavorite(program.id, 'program') && (
+                      <div className="favorite-indicator">
+                        ❤️
+                      </div>
+                    )}
+                    
                     <div className="flex items-start justify-between mb-2">
                       <h4 className="font-semibold text-foreground">
                         {program.title}
                       </h4>
                       <div className="flex items-center gap-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleFavoriteToggle(program);
+                          }}
+                          className={`p-1 rounded transition-colors ${
+                            isFavorite(program.id, 'program') 
+                              ? 'text-red-500 hover:text-red-400' 
+                              : 'text-muted-foreground hover:text-red-500'
+                          }`}
+                        >
+                          {isFavorite(program.id, 'program') ? '❤️' : '🤍'}
+                        </button>
                         {isCurrentTime(program) && (
                           <span className="px-2 py-1 bg-red-500 text-white text-xs rounded font-bold">
                             LIVE
@@ -236,7 +276,38 @@ const TVGuide: React.FC<TVGuideProps> = ({ onClose, onSelectProgram }) => {
             )}
           </div>
         </div>
-      </div>
+        </div>
+      ) : (
+        /* Horizontal Timeline View */
+        <div className="overflow-auto">
+          <div className="min-w-max">
+            <div className="grid grid-cols-24 gap-1 mb-4">
+              {Array.from({ length: 24 }, (_, hour) => (
+                <div key={hour} className="text-center text-xs text-muted-foreground p-2">
+                  {hour.toString().padStart(2, '0')}:00
+                </div>
+              ))}
+            </div>
+            
+            {channels.map((channel, channelIndex) => (
+              <div key={channel.id} className="mb-2">
+                <div className="flex items-center gap-4 mb-1">
+                  <div className="w-24 flex-shrink-0 text-sm font-medium">
+                    {channel.name}
+                  </div>
+                  
+                  <div className="flex-1 relative h-12 bg-muted rounded">
+                    {/* Programs for this channel would be positioned here */}
+                    <div className="absolute inset-0 flex items-center justify-center text-xs text-muted-foreground">
+                      Timeline view for {channel.name}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
